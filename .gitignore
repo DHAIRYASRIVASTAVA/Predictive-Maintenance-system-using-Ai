@@ -1,7 +1,7 @@
 __pycache__/
 *.pyc
-.ipynb_checkpoints/
-predictions.db
-.streamlit/secrets.toml
 venv/
 .env
+models/*.pth
+models/*.h5
+outputs/
