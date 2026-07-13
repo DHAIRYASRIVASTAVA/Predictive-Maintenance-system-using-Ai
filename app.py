@@ -1,19 +1,3 @@
-"""
-app.py
-------
-Streamlit frontend for the Predictive Maintenance project.
-
-Pages (sidebar navigation):
-1. Predict          -> input form, live prediction, failure probability, risk level,
-                        maintenance recommendation
-2. Prediction History -> table of past predictions pulled from SQLite
-3. Dashboard         -> interactive charts (bar, pie, line, histogram) over history
-4. About             -> project info
-
-Run with:
-    streamlit run app.py
-"""
-
 import os
 import sqlite3
 from datetime import datetime
@@ -23,10 +7,8 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-
-# ---------------------------------------------------------------
 # Config
-# ---------------------------------------------------------------
+
 MODEL_DIR = "models"
 DB_PATH = "predictions.db"
 
@@ -35,10 +17,8 @@ st.set_page_config(
     page_icon="🛠️",
     layout="wide",
 )
-
-# ---------------------------------------------------------------
 # Load model artifacts (cached)
-# ---------------------------------------------------------------
+
 @st.cache_resource
 def load_artifacts():
     model = joblib.load(f"{MODEL_DIR}/best_model.pkl")
@@ -52,30 +32,17 @@ def load_artifacts():
 
 ARTIFACTS_OK = os.path.exists(f"{MODEL_DIR}/best_model.pkl")
 
-# ---------------------------------------------------------------
 # SQLite setup
-# ---------------------------------------------------------------
+
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
     cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS predictions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT,
-            machine_type TEXT,
-            temperature REAL,
-            vibration REAL,
-            rpm REAL,
-            voltage REAL,
-            current REAL,
-            pressure REAL,
-            predicted_status TEXT,
-            failure_probability REAL,
+        
             risk_level TEXT,
             recommendation TEXT
         )
-        """
+       
     )
     conn.commit()
     conn.close()
@@ -140,10 +107,6 @@ def get_risk_and_recommendation(status: str, failure_prob: float):
 
     return risk, rec
 
-
-# ---------------------------------------------------------------
-# Sidebar navigation
-# ---------------------------------------------------------------
 st.sidebar.title("🛠️ Predictive Maintenance")
 page = st.sidebar.radio(
     "Navigate",
@@ -156,9 +119,9 @@ st.sidebar.caption(
     "Enter live sensor readings to estimate machine health."
 )
 
-# ---------------------------------------------------------------
+
 # PAGE: Predict
-# ---------------------------------------------------------------
+
 if page == "Predict":
     st.title("🔧 Machine Health Prediction")
     st.write(
@@ -275,11 +238,11 @@ if page == "Predict":
             insert_prediction(record)
             st.success("Prediction saved to history.")
 
-# ---------------------------------------------------------------
-# PAGE: Prediction History
-# ---------------------------------------------------------------
+
+# prediction history
+
 elif page == "Prediction History":
-    st.title("📜 Prediction History")
+    st.title("Prediction History")
     history_df = fetch_history()
 
     if history_df.empty:
@@ -299,9 +262,9 @@ elif page == "Prediction History":
             conn.close()
             st.rerun()
 
-# ---------------------------------------------------------------
+
 # PAGE: Dashboard
-# ---------------------------------------------------------------
+
 elif page == "Dashboard":
     st.title("📊 Maintenance Dashboard")
     history_df = fetch_history()
@@ -361,31 +324,17 @@ elif page == "Dashboard":
         )
         st.plotly_chart(fig5, use_container_width=True)
 
-# ---------------------------------------------------------------
+
 # PAGE: About
-# ---------------------------------------------------------------
+
 else:
-    st.title("ℹ️ About This Project")
+    st.title(" About This Project")
     st.markdown(
         """
         **Predictive Maintenance using AI** is a machine learning system that
         predicts machine health status from live sensor readings
         (temperature, vibration, RPM, voltage, current, pressure).
-
-        **Pipeline:**
-        1. Data cleaning & EDA (`train_model.py`)
-        2. Feature engineering, encoding, scaling
-        3. Model training & comparison (Logistic Regression, Decision Tree,
-           Random Forest, SVM, optional XGBoost)
-        4. Best model saved with `joblib`
-        5. Streamlit app for live predictions + SQLite history + dashboard
-
-        **Outputs:**
-        - Machine Status: Healthy / Warning / Faulty
-        - Failure Probability (%)
-        - Risk Level: Low / Medium / High
-        - Maintenance Recommendation
-
-        Built with Python, Scikit-learn, Streamlit, SQLite, and Plotly.
         """
+
+        
     )
