@@ -1,24 +1,3 @@
-"""
-train_model.py
----------------
-End-to-end training pipeline for the Predictive Maintenance project.
-
-Steps:
-1. Load data
-2. Clean data (missing values, duplicates)
-3. EDA (saved as PNG charts in outputs/eda/)
-4. Feature engineering + encoding + scaling
-5. Train/test split
-6. Train multiple models (Logistic Regression, Decision Tree, Random Forest,
-   optionally SVM / XGBoost)
-7. Evaluate (accuracy, precision, recall, F1, confusion matrix)
-8. Save the best model + scaler + label encoders with joblib for the
-   Streamlit app to load
-
-Run:
-    python train_model.py
-"""
-
 import os
 import numpy as np
 import pandas as pd
