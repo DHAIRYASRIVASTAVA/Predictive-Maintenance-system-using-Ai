@@ -26,7 +26,6 @@ EDA_DIR = "outputs/eda"
 os.makedirs(MODEL_DIR, exist_ok=True)
 os.makedirs(EDA_DIR, exist_ok=True)
 
-# XGBoost is optional — use it if available, skip gracefully otherwise
 try:
     from xgboost import XGBClassifier
     HAS_XGB = True
@@ -34,17 +33,11 @@ except ImportError:
     HAS_XGB = False
 
 
-# ---------------------------------------------------------------
-# 1. Load data
-# ---------------------------------------------------------------
 print("Loading data...")
 df = pd.read_csv(DATA_PATH)
 print(f"Shape: {df.shape}")
 print(df.head())
 
-# ---------------------------------------------------------------
-# 2. Clean data
-# ---------------------------------------------------------------
 print("\nCleaning data...")
 before = len(df)
 df = df.drop_duplicates()
@@ -58,11 +51,8 @@ for col in numeric_cols:
     if col in df.columns:
         df[col] = df[col].fillna(df[col].median())
 
-df = df.dropna(subset=["Status"])  # target must always be present
+df = df.dropna(subset=["Status"])  
 
-# ---------------------------------------------------------------
-# 3. EDA (saved to outputs/eda/*.png)
-# ---------------------------------------------------------------
 print("\nRunning EDA and saving charts...")
 sns.set_style("whitegrid")
 
@@ -99,16 +89,14 @@ plt.close()
 
 print(f"EDA charts saved to {EDA_DIR}/")
 
-# ---------------------------------------------------------------
-# 4. Feature engineering + encoding + scaling
-# ---------------------------------------------------------------
+
 print("\nEncoding categorical features...")
 le_machine = LabelEncoder()
 df["Machine_Type_Enc"] = le_machine.fit_transform(df["Machine_Type"])
 
 le_status = LabelEncoder()
 df["Status_Enc"] = le_status.fit_transform(df["Status"])
-# Keep track of label order for the app: le_status.classes_
+
 
 feature_cols = [
     "Machine_Type_Enc",
@@ -126,17 +114,11 @@ y = df["Status_Enc"]
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# ---------------------------------------------------------------
-# 5. Train/test split
-# ---------------------------------------------------------------
 X_train, X_test, y_train, y_test = train_test_split(
     X_scaled, y, test_size=0.2, random_state=42, stratify=y
 )
 print(f"\nTrain size: {X_train.shape[0]}, Test size: {X_test.shape[0]}")
 
-# ---------------------------------------------------------------
-# 6. Train multiple models
-# ---------------------------------------------------------------
 models = {
     "Logistic Regression": LogisticRegression(max_iter=1000),
     "Decision Tree": DecisionTreeClassifier(random_state=42),
@@ -172,9 +154,6 @@ print("\n=== Model Comparison ===")
 print(results_df.to_string(index=False))
 results_df.to_csv("outputs/model_comparison.csv", index=False)
 
-# ---------------------------------------------------------------
-# 7. Pick best model (Random Forest recommended; fallback to best F1)
-# ---------------------------------------------------------------
 best_name = "Random Forest" if "Random Forest" in trained_models else results_df.iloc[0]["Model"]
 best_model = trained_models[best_name]
 print(f"\nSelected best model: {best_name}")
@@ -196,9 +175,6 @@ plt.tight_layout()
 plt.savefig(f"{EDA_DIR}/confusion_matrix.png")
 plt.close()
 
-# ---------------------------------------------------------------
-# 8. Save model + scaler + encoders with joblib
-# ---------------------------------------------------------------
 joblib.dump(best_model, f"{MODEL_DIR}/best_model.pkl")
 joblib.dump(scaler, f"{MODEL_DIR}/scaler.pkl")
 joblib.dump(le_machine, f"{MODEL_DIR}/le_machine.pkl")
