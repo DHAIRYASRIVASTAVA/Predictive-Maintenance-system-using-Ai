@@ -1,19 +1,3 @@
-"""
-app.py
-------
-Streamlit frontend for the Predictive Maintenance project.
-
-Pages (sidebar navigation):
-1. Predict          -> input form, live prediction, failure probability, risk level,
-                        maintenance recommendation
-2. Prediction History -> table of past predictions pulled from SQLite
-3. Dashboard         -> interactive charts (bar, pie, line, histogram) over history
-4. About             -> project info
-
-Run with:
-    streamlit run app.py
-"""
-
 import os
 import sqlite3
 from datetime import datetime
@@ -24,9 +8,8 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-# ---------------------------------------------------------------
 # Config
-# ---------------------------------------------------------------
+
 MODEL_DIR = "models"
 DB_PATH = "predictions.db"
 
@@ -36,11 +19,7 @@ st.set_page_config(
     layout="wide",
 )
 
-# ---------------------------------------------------------------
-# Custom CSS — tweak colors/styles here beyond what .streamlit/config.toml
-# controls (config.toml sets the global theme; this handles specific
-# elements like metric cards, headers, and the sidebar title).
-# ---------------------------------------------------------------
+
 st.markdown(
     """
     <style>
@@ -107,9 +86,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ---------------------------------------------------------------
+
 # Load model artifacts (cached)
-# ---------------------------------------------------------------
+
 @st.cache_resource
 def load_artifacts():
     model = joblib.load(f"{MODEL_DIR}/best_model.pkl")
@@ -123,9 +102,9 @@ def load_artifacts():
 
 ARTIFACTS_OK = os.path.exists(f"{MODEL_DIR}/best_model.pkl")
 
-# ---------------------------------------------------------------
+
 # SQLite setup
-# ---------------------------------------------------------------
+
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -183,9 +162,9 @@ def fetch_history() -> pd.DataFrame:
 
 init_db()
 
-# ---------------------------------------------------------------
+
 # Business logic: risk level + maintenance recommendation
-# ---------------------------------------------------------------
+
 def get_risk_and_recommendation(status: str, failure_prob: float):
     if status == "Healthy":
         risk = "Low"
@@ -212,9 +191,9 @@ def get_risk_and_recommendation(status: str, failure_prob: float):
     return risk, rec
 
 
-# ---------------------------------------------------------------
+
 # Sidebar navigation
-# ---------------------------------------------------------------
+
 st.sidebar.title("🛠️ Predictive Maintenance")
 page = st.sidebar.radio(
     "Navigate",
@@ -227,9 +206,9 @@ st.sidebar.caption(
     "Enter live sensor readings to estimate machine health."
 )
 
-# ---------------------------------------------------------------
+
 # PAGE: Predict
-# ---------------------------------------------------------------
+
 if page == "Predict":
     st.title("🔧 Machine Health Prediction")
     st.write(
@@ -346,9 +325,9 @@ if page == "Predict":
             insert_prediction(record)
             st.success("Prediction saved to history.")
 
-# ---------------------------------------------------------------
+
 # PAGE: Prediction History
-# ---------------------------------------------------------------
+
 elif page == "Prediction History":
     st.title("📜 Prediction History")
     history_df = fetch_history()
@@ -370,9 +349,9 @@ elif page == "Prediction History":
             conn.close()
             st.rerun()
 
-# ---------------------------------------------------------------
+
 # PAGE: Dashboard
-# ---------------------------------------------------------------
+
 elif page == "Dashboard":
     st.title("📊 Maintenance Dashboard")
     history_df = fetch_history()
@@ -432,9 +411,9 @@ elif page == "Dashboard":
         )
         st.plotly_chart(fig5, use_container_width=True)
 
-# ---------------------------------------------------------------
+
 # PAGE: About
-# ---------------------------------------------------------------
+
 else:
     st.title("ℹ️ About This Project")
     st.markdown(
