@@ -1,3 +1,19 @@
+"""
+app.py
+------
+Streamlit frontend for the Predictive Maintenance project.
+
+Pages (sidebar navigation):
+1. Predict          -> input form, live prediction, failure probability, risk level,
+                        maintenance recommendation
+2. Prediction History -> table of past predictions pulled from SQLite
+3. Dashboard         -> interactive charts (bar, pie, line, histogram) over history
+4. About             -> project info
+
+Run with:
+    streamlit run app.py
+"""
+
 import os
 import sqlite3
 from datetime import datetime
@@ -8,9 +24,9 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-
+# ---------------------------------------------------------------
 # Config
-
+# ---------------------------------------------------------------
 MODEL_DIR = "models"
 DB_PATH = "predictions.db"
 
@@ -20,9 +36,80 @@ st.set_page_config(
     layout="wide",
 )
 
+# ---------------------------------------------------------------
+# Custom CSS — tweak colors/styles here beyond what .streamlit/config.toml
+# controls (config.toml sets the global theme; this handles specific
+# elements like metric cards, headers, and the sidebar title).
+# ---------------------------------------------------------------
+st.markdown(
+    """
+    <style>
+    /* Main app background */
+    .stApp {
+        background-color: #0E1117;
+        color: #E6E6E6;
+    }
 
+    /* Sidebar background */
+    section[data-testid="stSidebar"] {
+        background-color: #161B22;
+    }
+    section[data-testid="stSidebar"] * {
+        color: #E6E6E6;
+    }
+
+    /* Main title */
+    h1, h2, h3, h4 {
+        color: #00C896;
+    }
+
+    /* Metric cards (st.metric) */
+    div[data-testid="stMetric"] {
+        background-color: #161B22;
+        border: 1px solid #2A323C;
+        border-radius: 10px;
+        padding: 12px;
+    }
+
+    /* Form submit button */
+    div.stFormSubmitButton > button {
+        background-color: #00C896;
+        color: #0E1117;
+        font-weight: bold;
+        border-radius: 8px;
+        border: none;
+    }
+    div.stFormSubmitButton > button:hover {
+        background-color: #00A67D;
+        color: #0E1117;
+    }
+
+    /* Regular buttons (Clear History, download button) */
+    .stButton > button, .stDownloadButton > button {
+        background-color: #00C896;
+        color: #0E1117;
+        font-weight: bold;
+        border-radius: 8px;
+        border: none;
+    }
+    .stButton > button:hover, .stDownloadButton > button:hover {
+        background-color: #00A67D;
+        color: #0E1117;
+    }
+
+    /* Info/warning/success boxes readability on dark bg */
+    div[data-testid="stAlert"] {
+        background-color: #161B22;
+        border: 1px solid #2A323C;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ---------------------------------------------------------------
 # Load model artifacts (cached)
-
+# ---------------------------------------------------------------
 @st.cache_resource
 def load_artifacts():
     model = joblib.load(f"{MODEL_DIR}/best_model.pkl")
@@ -36,9 +123,9 @@ def load_artifacts():
 
 ARTIFACTS_OK = os.path.exists(f"{MODEL_DIR}/best_model.pkl")
 
-
+# ---------------------------------------------------------------
 # SQLite setup
-
+# ---------------------------------------------------------------
 def init_db():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -96,9 +183,9 @@ def fetch_history() -> pd.DataFrame:
 
 init_db()
 
-
+# ---------------------------------------------------------------
 # Business logic: risk level + maintenance recommendation
-
+# ---------------------------------------------------------------
 def get_risk_and_recommendation(status: str, failure_prob: float):
     if status == "Healthy":
         risk = "Low"
@@ -125,9 +212,9 @@ def get_risk_and_recommendation(status: str, failure_prob: float):
     return risk, rec
 
 
-
+# ---------------------------------------------------------------
 # Sidebar navigation
-
+# ---------------------------------------------------------------
 st.sidebar.title("🛠️ Predictive Maintenance")
 page = st.sidebar.radio(
     "Navigate",
@@ -140,9 +227,9 @@ st.sidebar.caption(
     "Enter live sensor readings to estimate machine health."
 )
 
-
+# ---------------------------------------------------------------
 # PAGE: Predict
-
+# ---------------------------------------------------------------
 if page == "Predict":
     st.title("🔧 Machine Health Prediction")
     st.write(
@@ -259,11 +346,11 @@ if page == "Predict":
             insert_prediction(record)
             st.success("Prediction saved to history.")
 
-
+# ---------------------------------------------------------------
 # PAGE: Prediction History
-
+# ---------------------------------------------------------------
 elif page == "Prediction History":
-    st.title("Prediction History")
+    st.title("📜 Prediction History")
     history_df = fetch_history()
 
     if history_df.empty:
@@ -283,9 +370,9 @@ elif page == "Prediction History":
             conn.close()
             st.rerun()
 
-
+# ---------------------------------------------------------------
 # PAGE: Dashboard
-
+# ---------------------------------------------------------------
 elif page == "Dashboard":
     st.title("📊 Maintenance Dashboard")
     history_df = fetch_history()
@@ -315,7 +402,7 @@ elif page == "Dashboard":
         with col2:
             fig2 = px.bar(
                 status_counts, x="Status", y="Count", color="Status",
-                color_discrete_map={"Healthy": "green", "Warning": "yellow", "Faulty": "red"},
+                color_discrete_map={"Healthy": "green", "Warning": "orange", "Faulty": "red"},
                 title="Predictions by Status",
             )
             st.plotly_chart(fig2, use_container_width=True)
@@ -345,11 +432,11 @@ elif page == "Dashboard":
         )
         st.plotly_chart(fig5, use_container_width=True)
 
-
+# ---------------------------------------------------------------
 # PAGE: About
-
+# ---------------------------------------------------------------
 else:
-    st.title(" About This Project")
+    st.title("ℹ️ About This Project")
     st.markdown(
         """
         **Predictive Maintenance using AI** is a machine learning system that
