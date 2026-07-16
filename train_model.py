@@ -20,10 +20,17 @@ from sklearn.metrics import (
 )
 import joblib
 
-DATA_PATH = "data/machine_data.csv"
+from google.colab import drive
+drive.mount('/content/drive')
+
+DATA_PATH = "/content/drive/MyDrive/machine_data.csv"
+
 MODEL_DIR = "models"
+OUTPUT_DIR = "outputs"
 EDA_DIR = "outputs/eda"
+
 os.makedirs(MODEL_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(EDA_DIR, exist_ok=True)
 
 try:
@@ -32,11 +39,13 @@ try:
 except ImportError:
     HAS_XGB = False
 
-
 print("Loading data...")
 df = pd.read_csv(DATA_PATH)
+
 print(f"Shape: {df.shape}")
 print(df.head())
+
+
 
 print("\nCleaning data...")
 before = len(df)
@@ -51,7 +60,7 @@ for col in numeric_cols:
     if col in df.columns:
         df[col] = df[col].fillna(df[col].median())
 
-df = df.dropna(subset=["Status"])  
+df = df.dropna(subset=["Status"])
 
 print("\nRunning EDA and saving charts...")
 sns.set_style("whitegrid")
